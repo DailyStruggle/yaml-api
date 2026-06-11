@@ -1,0 +1,50 @@
+// yaml-api -- in-house, zero-dependency YAML substrate (ADR-025). Pure-Java
+// module: no Bukkit / Fabric / Loom / core dependency. Extracted from
+// rtp-core's io.github.dailystruggle.rtp.common.configuration.yaml package so
+// that rtp-api can host the configurable selection model (FactoryValue and the
+// Shape / VerticalAdjustor hierarchy) without depending on rtp-core. The
+// package name is preserved verbatim on extraction so no import site across the
+// monorepo changes; only the providing jar moves.
+//
+// Shape mirrors metrics-api / maps-api: java-library, JUnit Jupiter + Mockito
+// inherited from the root subprojects {} block.
+plugins {
+    id 'java-library'
+}
+
+group = 'io.github.dailystruggle'
+version = '3.1.2'
+
+repositories {
+    mavenCentral()
+}
+
+java {
+    toolchain {
+        languageVersion = JavaLanguageVersion.of(21)
+    }
+    withJavadocJar()
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile) {
+    options.encoding = 'UTF-8'
+}
+
+dependencies {
+    compileOnly 'org.jetbrains:annotations:24.1.0'
+    testImplementation platform('org.junit:junit-bom:5.10.0')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testImplementation 'org.mockito:mockito-core:5.5.0'
+    testImplementation 'org.jetbrains:annotations:24.1.0'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+test {
+    useJUnitPlatform()
+}
+
+javadoc {
+    options.encoding = 'UTF-8'
+    options.addStringOption('Xdoclint:syntax,html', '-quiet')
+}
