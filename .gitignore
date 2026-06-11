@@ -1,2 +1,6 @@
 build/
 .gradle/
+
+# Package Files #
+*.jar
+!gradle/wrapper/gradle-wrapper.jar
