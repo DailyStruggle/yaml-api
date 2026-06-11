@@ -10,14 +10,11 @@
 // inherited from the root subprojects {} block.
 plugins {
     id 'java-library'
+    id 'maven-publish'
 }
 
 group = 'io.github.dailystruggle'
 version = '3.1.2'
-
-repositories {
-    mavenCentral()
-}
 
 java {
     toolchain {
@@ -40,6 +37,10 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
+repositories {
+    mavenCentral()
+}
+
 test {
     useJUnitPlatform()
 }
@@ -47,4 +48,12 @@ test {
 javadoc {
     options.encoding = 'UTF-8'
     options.addStringOption('Xdoclint:syntax,html', '-quiet')
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+        }
+    }
 }

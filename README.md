@@ -1,8 +1,48 @@
 # yaml-api
 
-A basic, standalone, cross-platform YAML processor for Java.
+A basic, standalone, cross-platform YAML processor for Java 17+.
 
 This library was designed to provide a lightweight way to read, manipulate, and save YAML files while preserving comments and formatting, without depending on heavy external libraries like SnakeYAML.
+
+## Installation
+
+### JitPack
+
+To use this library in your project via JitPack:
+
+#### Gradle
+
+Add the JitPack repository to your `build.gradle`:
+
+```gradle
+repositories {
+    maven { url 'https://jitpack.io' }
+}
+
+dependencies {
+    implementation 'com.github.dailystruggle:yaml-api:TAG'
+}
+```
+*(Replace `TAG` with a specific release tag or commit hash)*
+
+#### Maven
+
+Add the JitPack repository to your `pom.xml`:
+
+```xml
+<repositories>
+    <repository>
+        <id>jitpack.io</id>
+        <url>https://jitpack.io</url>
+    </repository>
+</repositories>
+
+<dependency>
+    <groupId>com.github.dailystruggle</groupId>
+    <artifactId>yaml-api</artifactId>
+    <version>TAG</version>
+</dependency>
+```
 
 ## Features
 
@@ -10,6 +50,7 @@ This library was designed to provide a lightweight way to read, manipulate, and 
 - **Comment Preservation**: Maintains header and block comments during round-trips.
 - **Simple API**: Easy-to-use methods for getting and setting values, similar to common configuration APIs.
 - **Cross-Platform**: Works across different environments and platforms.
+- **Java 17+**: Optimized for modern Java environments.
 - **Automatic Directory Creation**: Automatically creates parent directories when saving files.
 
 ## Usage
