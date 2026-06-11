@@ -1,4 +1,4 @@
-package io.github.dailystruggle.rtp.common.configuration.yaml;
+package io.github.dailystruggle.yaml;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +14,7 @@ import java.util.stream.Stream;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Write-behavior verification for {@link RtpYamlConfig}.
+ * Write-behavior verification for {@link YamlConfig}.
  *
  * <p>The pre-existing suite (golden-file, deep-keys parity, etc.) only
  * exercises {@code parse → emit} as strings. This test covers the actual
@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * {@code IllegalStateException} contract on unbound documents, and that
  * no temp-file litter is left behind after a successful save.</p>
  */
-class RtpYamlWriteBehaviorTest {
+class YamlWriteBehaviorTest {
 
     private static final String SAMPLE =
             "# header comment\n" +
@@ -44,7 +44,7 @@ class RtpYamlWriteBehaviorTest {
         File target = dir.resolve("config.yml").toFile();
         Files.write(target.toPath(), SAMPLE.getBytes(StandardCharsets.UTF_8));
 
-        RtpYamlConfig cfg = RtpYamlConfig.load(target);
+        YamlConfig cfg = YamlConfig.load(target);
         String emittedBefore = cfg.saveToString();
         cfg.save();
 
@@ -53,7 +53,7 @@ class RtpYamlWriteBehaviorTest {
         assertEquals(emittedBefore, onDisk, "on-disk content must match saveToString()");
 
         // Reload and confirm byte-stable second save.
-        RtpYamlConfig reloaded = RtpYamlConfig.load(target);
+        YamlConfig reloaded = YamlConfig.load(target);
         assertEquals(emittedBefore, reloaded.saveToString(),
                 "reload∘save must be byte-identical to the first emit");
     }
@@ -64,7 +64,7 @@ class RtpYamlWriteBehaviorTest {
         File target = dir.resolve("config.yml").toFile();
         Files.write(target.toPath(), "old: 1\n".getBytes(StandardCharsets.UTF_8));
 
-        RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+        YamlConfig cfg = YamlConfig.parse(SAMPLE);
         cfg.save(target);
 
         String onDisk = new String(Files.readAllBytes(target.toPath()), StandardCharsets.UTF_8);
@@ -78,7 +78,7 @@ class RtpYamlWriteBehaviorTest {
         File nested = dir.resolve("a").resolve("b").resolve("config.yml").toFile();
         assertFalse(nested.getParentFile().exists(), "precondition: parent dirs absent");
 
-        RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+        YamlConfig cfg = YamlConfig.parse(SAMPLE);
         cfg.save(nested);
 
         assertTrue(nested.isFile(), "file must exist under the auto-created parents");
@@ -89,14 +89,14 @@ class RtpYamlWriteBehaviorTest {
     @Test
     @DisplayName("save() with no file binding throws IllegalStateException")
     void saveWithoutBindingThrows() {
-        RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+        YamlConfig cfg = YamlConfig.parse(SAMPLE);
         assertThrows(IllegalStateException.class, cfg::save);
     }
 
     @Test
     @DisplayName("save(null) throws IllegalArgumentException")
     void saveNullTargetThrows() {
-        RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+        YamlConfig cfg = YamlConfig.parse(SAMPLE);
         assertThrows(IllegalArgumentException.class, () -> cfg.save(null));
     }
 
@@ -104,7 +104,7 @@ class RtpYamlWriteBehaviorTest {
     @DisplayName("save() leaves no .tmp residue in the target directory")
     void saveLeavesNoTempResidue(@TempDir Path dir) throws IOException {
         File target = dir.resolve("config.yml").toFile();
-        RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+        YamlConfig cfg = YamlConfig.parse(SAMPLE);
         cfg.save(target);
 
         try (Stream<Path> entries = Files.list(dir)) {
@@ -117,7 +117,7 @@ class RtpYamlWriteBehaviorTest {
     @DisplayName("save() preserves block comments and indentation through real file I/O")
     void savePreservesBlockComments(@TempDir Path dir) throws IOException {
         File target = dir.resolve("config.yml").toFile();
-        RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+        YamlConfig cfg = YamlConfig.parse(SAMPLE);
         cfg.save(target);
 
         String onDisk = new String(Files.readAllBytes(target.toPath()), StandardCharsets.UTF_8);
@@ -130,7 +130,7 @@ class RtpYamlWriteBehaviorTest {
     @DisplayName("load() of empty/non-existent file yields empty doc that saves cleanly")
     void loadEmptyOrMissingThenSave(@TempDir Path dir) throws IOException {
         File missing = dir.resolve("missing.yml").toFile();
-        RtpYamlConfig cfg = RtpYamlConfig.load(missing);
+        YamlConfig cfg = YamlConfig.load(missing);
         cfg.save(missing);
         assertTrue(missing.isFile(), "save() must create the file even from an empty doc");
     }

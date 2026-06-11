@@ -1,4 +1,4 @@
-package io.github.dailystruggle.rtp.common.configuration.yaml;
+package io.github.dailystruggle.yaml;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -28,7 +28,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * round-trip, write behavior); this class only exercises the parity surface
  * itself.</p>
  */
-class RtpYamlSimpleYamlParityTest {
+class YamlSimpleYamlParityTest {
 
     private static final String SAMPLE =
             "# top comment\n" +
@@ -54,7 +54,7 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("getString / getString(def) returns value or default")
         void getString() {
-            RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+            YamlConfig cfg = YamlConfig.parse(SAMPLE);
             assertEquals("hello", cfg.getString("name"));
             assertNull(cfg.getString("missing"));
             assertEquals("fallback", cfg.getString("missing", "fallback"));
@@ -63,7 +63,7 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("getInt / getInt(def) coerces numerics and falls back")
         void getInt() {
-            RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+            YamlConfig cfg = YamlConfig.parse(SAMPLE);
             assertEquals(2, cfg.getInt("teleportDelay"));
             assertEquals(0, cfg.getInt("missing"));
             assertEquals(42, cfg.getInt("missing", 42));
@@ -72,7 +72,7 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("getLong / getLong(def) handles large values")
         void getLong() {
-            RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+            YamlConfig cfg = YamlConfig.parse(SAMPLE);
             assertEquals(9999999999L, cfg.getLong("big"));
             assertEquals(7L, cfg.getLong("missing", 7L));
         }
@@ -80,7 +80,7 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("getDouble / getDouble(def) parses floats")
         void getDouble() {
-            RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+            YamlConfig cfg = YamlConfig.parse(SAMPLE);
             assertEquals(1.5, cfg.getDouble("ratio"), 1e-9);
             assertEquals(2.5, cfg.getDouble("missing", 2.5), 1e-9);
         }
@@ -88,7 +88,7 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("getBoolean / getBoolean(def) covers true/yes/on and false")
         void getBoolean() {
-            RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+            YamlConfig cfg = YamlConfig.parse(SAMPLE);
             assertTrue(cfg.getBoolean("active"));
             assertFalse(cfg.getBoolean("missing"));
             assertTrue(cfg.getBoolean("missing", true));
@@ -97,7 +97,7 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("getStringList / getList expose sequence contents")
         void lists() {
-            RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+            YamlConfig cfg = YamlConfig.parse(SAMPLE);
             List<String> strings = cfg.getStringList("items");
             assertEquals(List.of("a", "b", "3"), strings);
             assertNotNull(cfg.getList("items"));
@@ -113,7 +113,7 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("isSet / contains agree and detect presence")
         void isSet() {
-            RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+            YamlConfig cfg = YamlConfig.parse(SAMPLE);
             assertTrue(cfg.isSet("name"));
             assertTrue(cfg.contains("name"));
             assertFalse(cfg.isSet("missing"));
@@ -122,7 +122,7 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("isConfigurationSection identifies mappings only")
         void isConfigurationSection() {
-            RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+            YamlConfig cfg = YamlConfig.parse(SAMPLE);
             assertTrue(cfg.isConfigurationSection("database"));
             assertFalse(cfg.isConfigurationSection("name"));
             assertFalse(cfg.isConfigurationSection("missing"));
@@ -131,7 +131,7 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("isString / isInt / isBoolean / isList classify correctly")
         void typePredicates() {
-            RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+            YamlConfig cfg = YamlConfig.parse(SAMPLE);
             assertTrue(cfg.isString("name"));
             assertFalse(cfg.isString("teleportDelay"));
             assertTrue(cfg.isInt("teleportDelay"));
@@ -149,7 +149,7 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("root section name/currentPath are empty strings")
         void rootIdentity() {
-            RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+            YamlConfig cfg = YamlConfig.parse(SAMPLE);
             assertEquals("", cfg.getName());
             assertEquals("", cfg.getCurrentPath());
         }
@@ -157,8 +157,8 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("nested section name/currentPath reflect their position")
         void nestedIdentity() {
-            RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
-            RtpYamlSection db = cfg.getConfigurationSection("database");
+            YamlConfig cfg = YamlConfig.parse(SAMPLE);
+            YamlSection db = cfg.getConfigurationSection("database");
             assertNotNull(db);
             assertEquals("database", db.getName());
             assertEquals("database", db.getCurrentPath());
@@ -174,7 +174,7 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("getValues(false) yields top-level entries only")
         void shallow() {
-            RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+            YamlConfig cfg = YamlConfig.parse(SAMPLE);
             Map<String, Object> v = cfg.getValues(false);
             assertTrue(v.containsKey("teleportDelay"));
             assertTrue(v.containsKey("database"));
@@ -184,7 +184,7 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("getValues(true) flattens to dot-paths")
         void deep() {
-            RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+            YamlConfig cfg = YamlConfig.parse(SAMPLE);
             Map<String, Object> v = cfg.getValues(true);
             assertEquals("sqlite", v.get("database.type"));
             assertEquals(3306, ((Number) v.get("database.port")).intValue());
@@ -199,8 +199,8 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("options() is non-null and the same instance on repeat calls")
         void identity() {
-            RtpYamlConfig cfg = new RtpYamlConfig();
-            RtpYamlOptions opts = cfg.options();
+            YamlConfig cfg = new YamlConfig();
+            YamlOptions opts = cfg.options();
             assertNotNull(opts);
             assertSame(opts, cfg.options());
         }
@@ -208,8 +208,8 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("copyDefaults(boolean) is fluent and round-trips")
         void copyDefaultsRoundTrip() {
-            RtpYamlConfig cfg = new RtpYamlConfig();
-            RtpYamlOptions opts = cfg.options();
+            YamlConfig cfg = new YamlConfig();
+            YamlOptions opts = cfg.options();
             assertFalse(opts.copyDefaults(), "default is false");
             assertSame(opts, opts.copyDefaults(true), "fluent return");
             assertTrue(opts.copyDefaults());
@@ -218,8 +218,8 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("indent(int) is fluent and round-trips; rejects < 1")
         void indentRoundTrip() {
-            RtpYamlConfig cfg = new RtpYamlConfig();
-            RtpYamlOptions opts = cfg.options();
+            YamlConfig cfg = new YamlConfig();
+            YamlOptions opts = cfg.options();
             assertEquals(2, opts.indent());
             assertSame(opts, opts.indent(4));
             assertEquals(4, opts.indent());
@@ -234,7 +234,7 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("addDefault sets when absent")
         void setsWhenAbsent() {
-            RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+            YamlConfig cfg = YamlConfig.parse(SAMPLE);
             assertFalse(cfg.contains("newKey"));
             cfg.addDefault("newKey", 7);
             assertEquals(7, cfg.getInt("newKey"));
@@ -243,7 +243,7 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("addDefault leaves an existing value untouched")
         void preservesExisting() {
-            RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+            YamlConfig cfg = YamlConfig.parse(SAMPLE);
             cfg.addDefault("teleportDelay", 99);
             assertEquals(2, cfg.getInt("teleportDelay"), "existing value preserved");
         }
@@ -251,7 +251,7 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("addDefault on a dotted path creates the parent section")
         void createsNestedPath() {
-            RtpYamlConfig cfg = new RtpYamlConfig();
+            YamlConfig cfg = new YamlConfig();
             cfg.addDefault("a.b.c", "value");
             assertEquals("value", cfg.getString("a.b.c"));
             assertTrue(cfg.isConfigurationSection("a.b"));
@@ -268,7 +268,7 @@ class RtpYamlSimpleYamlParityTest {
             File target = dir.resolve("c.yml").toFile();
             Files.write(target.toPath(), SAMPLE.getBytes(StandardCharsets.UTF_8));
 
-            RtpYamlConfig cfg = new RtpYamlConfig(target.getAbsolutePath());
+            YamlConfig cfg = new YamlConfig(target.getAbsolutePath());
             cfg.setConfigurationFile(target);
             cfg.loadWithComments();
             assertEquals("hello", cfg.getString("name"));
@@ -291,7 +291,7 @@ class RtpYamlSimpleYamlParityTest {
         @Test
         @DisplayName("setComment then getComment round-trips for top-level keys")
         void roundTrip() {
-            RtpYamlConfig cfg = RtpYamlConfig.parse(SAMPLE);
+            YamlConfig cfg = YamlConfig.parse(SAMPLE);
             cfg.setComment("teleportDelay", "explain delay");
             String c = cfg.getComment("teleportDelay");
             assertNotNull(c);

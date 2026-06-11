@@ -1,4 +1,4 @@
-package io.github.dailystruggle.rtp.common.configuration.yaml;
+package io.github.dailystruggle.yaml;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -14,7 +14,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 /**
  * Gap-filling coverage for block-comment preservation beyond the basic
- * cases in {@link RtpYamlBlockCommentRoundTripTest}. Targets edge cases
+ * cases in {@link YamlBlockCommentRoundTripTest}. Targets edge cases
  * that real shipped configs exercise: multi-line comment blocks,
  * deeply-nested keys, comments above list items, comments preserved
  * through {@code set()} on the same key, document-leading/trailing
@@ -23,7 +23,7 @@ import static org.junit.jupiter.api.Assertions.*;
  *
  * <p>ADR-025 §Migration step 4 / ADR-042 block-only scope.</p>
  */
-class RtpYamlBlockCommentPreservationTest {
+class YamlBlockCommentPreservationTest {
 
     @Test
     @DisplayName("multi-line block comment (3+ lines) above a key survives re-emit")
@@ -34,7 +34,7 @@ class RtpYamlBlockCommentPreservationTest {
                 + "# line three\n"
                 + "# line four\n"
                 + "teleportDelay: 2\n";
-        String out = RtpYamlWriter.emit(RtpYamlReader.parse(src));
+        String out = YamlWriter.emit(YamlReader.parse(src));
         assertEquals(src, out);
     }
 
@@ -48,7 +48,7 @@ class RtpYamlBlockCommentPreservationTest {
                 + "    enabled: false\n"
                 + "    # redis server hostname\n"
                 + "    host: \"127.0.0.1\"\n";
-        String out = RtpYamlWriter.emit(RtpYamlReader.parse(src));
+        String out = YamlWriter.emit(YamlReader.parse(src));
         assertEquals(src, out);
     }
 
@@ -56,12 +56,12 @@ class RtpYamlBlockCommentPreservationTest {
     @DisplayName("document-leading comment block survives re-emit")
     void leadingDocumentCommentRoundTrip() {
         String src = ""
-                + "# --- RTP Core Configuration ---\n"
+                + "# --- YAML Core Configuration ---\n"
                 + "# Documentation: https://example.com\n"
                 + "\n"
                 + "# Wait time before teleport\n"
                 + "teleportDelay: 2\n";
-        String out = RtpYamlWriter.emit(RtpYamlReader.parse(src));
+        String out = YamlWriter.emit(YamlReader.parse(src));
         assertEquals(src, out);
     }
 
@@ -71,8 +71,8 @@ class RtpYamlBlockCommentPreservationTest {
         String src = ""
                 + "placeholders:\n"
                 + "  # P0\n"
-                + "  - \"[RTP]\"\n";
-        String out = RtpYamlWriter.emit(RtpYamlReader.parse(src));
+                + "  - \"[YAML]\"\n";
+        String out = YamlWriter.emit(YamlReader.parse(src));
         assertEquals(src, out);
     }
 
@@ -82,7 +82,7 @@ class RtpYamlBlockCommentPreservationTest {
         String src = ""
                 + "# delay comment must survive\n"
                 + "teleportDelay: 2\n";
-        RtpYamlConfig cfg = RtpYamlConfig.parse(src);
+        YamlConfig cfg = YamlConfig.parse(src);
         cfg.set("teleportDelay", 5);
         String out = cfg.saveToString();
         assertTrue(out.contains("# delay comment must survive"),
@@ -103,7 +103,7 @@ class RtpYamlBlockCommentPreservationTest {
         File f = dir.resolve("config.yml").toFile();
         Files.write(f.toPath(), src.getBytes(StandardCharsets.UTF_8));
 
-        RtpYamlConfig cfg = RtpYamlConfig.load(f);
+        YamlConfig cfg = YamlConfig.load(f);
         cfg.set("teleportDelay", 7);
         cfg.save();
 
@@ -122,7 +122,7 @@ class RtpYamlBlockCommentPreservationTest {
                 + "# detached comment\n"
                 + "\n"
                 + "teleportDelay: 2\n";
-        String out = RtpYamlWriter.emit(RtpYamlReader.parse(src));
+        String out = YamlWriter.emit(YamlReader.parse(src));
         assertEquals(src, out);
     }
 
@@ -140,7 +140,7 @@ class RtpYamlBlockCommentPreservationTest {
                 + "  y: 20\n"
                 + "# C\n"
                 + "gamma: 3\n";
-        String out = RtpYamlWriter.emit(RtpYamlReader.parse(src));
+        String out = YamlWriter.emit(YamlReader.parse(src));
         assertEquals(src, out);
     }
 }

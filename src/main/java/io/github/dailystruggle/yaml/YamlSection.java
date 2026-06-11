@@ -1,4 +1,4 @@
-package io.github.dailystruggle.rtp.common.configuration.yaml;
+package io.github.dailystruggle.yaml;
 
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -10,37 +10,37 @@ import java.util.Set;
 /**
  * Read-side / mutate-side handle on a YAML mapping (the root document or
  * a nested section). Mirrors the small surface of {@code simpleyaml}'s
- * {@code ConfigurationSection} that the RTP codebase actually uses, per
+ * {@code ConfigurationSection} that the YAML codebase actually uses, per
  * the ADR-025 §Context enumeration.
  *
- * <p>The handle holds a back-reference to the underlying {@link RtpYamlMapping}
+ * <p>The handle holds a back-reference to the underlying {@link YamlMapping}
  * — mutations performed through {@link #set(String, Object)} go directly
  * to the AST, so subsequent saves see them.</p>
  *
  * <p>Dotted-path keys (e.g. {@code "database.type"}) are supported and
  * match the deep-keys semantics established by the prior simpleyaml-backed
- * implementation (see {@code RtpYamlDeepKeysParityTest}).</p>
+ * implementation (see {@code yamlDeepKeysParityTest}).</p>
  */
-public class RtpYamlSection {
+public class YamlSection {
 
-    final RtpYamlMapping node;
+    final YamlMapping node;
     /** Own key name; empty string for the document root. */
     final String name;
     /** Dotted path from root; empty string for the document root. */
     final String path;
 
-    RtpYamlSection(RtpYamlMapping node) {
+    YamlSection(YamlMapping node) {
         this(node, "", "");
     }
 
-    RtpYamlSection(RtpYamlMapping node, String name, String path) {
+    YamlSection(YamlMapping node, String name, String path) {
         this.node = node;
         this.name = name == null ? "" : name;
         this.path = path == null ? "" : path;
     }
 
     /** The underlying AST mapping (package-private accessor for testing). */
-    RtpYamlMapping mapping() { return node; }
+    YamlMapping mapping() { return node; }
 
     /** Own key name (mirrors {@code simpleyaml}'s {@code ConfigurationSection.getName()}). */
     public String getName() { return name; }
@@ -51,12 +51,12 @@ public class RtpYamlSection {
     /**
      * Returns the value at {@code key}, where {@code key} may be a
      * dotted path. Scalars are returned with primitive coercion
-     * ({@link RtpYamlScalar#value()}); sections are returned as a
-     * {@link RtpYamlSection}; sequences are returned as a {@code List}
+     * ({@link YamlScalar#value()}); sections are returned as a
+     * {@link YamlSection}; sequences are returned as a {@code List}
      * of recursively coerced values.
      */
     public Object get(String key) {
-        RtpYamlNode n = resolve(key, false);
+        YamlNode n = resolve(key, false);
         return coerce(n);
     }
 
@@ -65,13 +65,13 @@ public class RtpYamlSection {
         return v == null ? fallback : v;
     }
 
-    public RtpYamlSection getConfigurationSection(String key) {
-        RtpYamlNode n = resolve(key, false);
-        if (n instanceof RtpYamlMapping) {
+    public YamlSection getConfigurationSection(String key) {
+        YamlNode n = resolve(key, false);
+        if (n instanceof YamlMapping) {
             String[] parts = key.split("\\.");
             String leaf = parts[parts.length - 1];
             String childPath = path.isEmpty() ? key : path + "." + key;
-            return new RtpYamlSection((RtpYamlMapping) n, leaf, childPath);
+            return new YamlSection((YamlMapping) n, leaf, childPath);
         }
         return null;
     }
@@ -84,7 +84,7 @@ public class RtpYamlSection {
     public boolean isSet(String key) { return contains(key); }
 
     public boolean isConfigurationSection(String key) {
-        return resolve(key, false) instanceof RtpYamlMapping;
+        return resolve(key, false) instanceof YamlMapping;
     }
 
     public boolean isString(String key) {
@@ -184,7 +184,7 @@ public class RtpYamlSection {
      * creates (or replaces) an empty section at {@code key} and returns a
      * handle to it.
      */
-    public RtpYamlSection createSection(String key) {
+    public YamlSection createSection(String key) {
         return createSection(key, java.util.Collections.emptyMap());
     }
 
@@ -193,13 +193,13 @@ public class RtpYamlSection {
      * creates (or replaces) a section at {@code key} populated with the entries
      * of {@code values} and returns a handle to it.
      */
-    public RtpYamlSection createSection(String key, Map<?, ?> values) {
-        RtpYamlMapping fresh = new RtpYamlMapping();
+    public YamlSection createSection(String key, Map<?, ?> values) {
+        YamlMapping fresh = new YamlMapping();
         for (var e : values.entrySet()) {
             fresh.put(String.valueOf(e.getKey()), toNode(e.getValue()));
         }
         set(key, fresh);
-        return new RtpYamlSection(fresh);
+        return new YamlSection(fresh);
     }
 
     /**
@@ -210,11 +210,11 @@ public class RtpYamlSection {
     public void remove(String key) {
         if (key == null || key.isEmpty()) return;
         String[] parts = key.split("\\.");
-        RtpYamlMapping cur = node;
+        YamlMapping cur = node;
         for (int i = 0; i < parts.length - 1; i++) {
-            RtpYamlNode child = cur.get(parts[i]);
-            if (!(child instanceof RtpYamlMapping)) return;
-            cur = (RtpYamlMapping) child;
+            YamlNode child = cur.get(parts[i]);
+            if (!(child instanceof YamlMapping)) return;
+            cur = (YamlMapping) child;
         }
         cur.entries().remove(parts[parts.length - 1]);
     }
@@ -227,14 +227,14 @@ public class RtpYamlSection {
         // -> getValues) can race with concurrent setters mutating the same
         // backing LinkedHashMap, producing ConcurrentModificationException.
         // A shallow copy of the entry set is cheap and decouples iteration
-        // from concurrent structural mutations; entry values (RtpYamlNode)
+        // from concurrent structural mutations; entry values (YamlNode)
         // are still shared, which is fine because we only read them.
         var snapshot = new ArrayList<>(node.entries().entrySet());
         for (var e : snapshot) {
             String key = e.getKey();
-            RtpYamlNode child = e.getValue();
-            if (deep && child instanceof RtpYamlMapping) {
-                Map<String, Object> sub = new RtpYamlSection((RtpYamlMapping) child).getValues(true);
+            YamlNode child = e.getValue();
+            if (deep && child instanceof YamlMapping) {
+                Map<String, Object> sub = new YamlSection((YamlMapping) child).getValues(true);
                 for (var sub_e : sub.entrySet()) {
                     out.put(key + "." + sub_e.getKey(), sub_e.getValue());
                 }
@@ -253,7 +253,7 @@ public class RtpYamlSection {
      * {@code getComment(String)}; multi-line comments are joined with {@code \n}.
      */
     public String getComment(String key) {
-        RtpYamlNode n = resolve(key, false);
+        YamlNode n = resolve(key, false);
         if (n == null) return null;
         List<String> lines = n.blockComments();
         if (lines == null || lines.isEmpty()) return null;
@@ -270,7 +270,7 @@ public class RtpYamlSection {
      * the comment. Multi-line input is split on {@code \n}.
      */
     public void setComment(String key, String comment) {
-        RtpYamlNode n = resolve(key, false);
+        YamlNode n = resolve(key, false);
         if (n == null) return;
         if (comment == null || comment.isEmpty()) {
             n.setBlockComments(new ArrayList<>());
@@ -295,12 +295,12 @@ public class RtpYamlSection {
         return out;
     }
 
-    private static void collectKeys(RtpYamlMapping mapping, String prefix, Set<String> out) {
+    private static void collectKeys(YamlMapping mapping, String prefix, Set<String> out) {
         for (var e : mapping.entries().entrySet()) {
             String path = prefix.isEmpty() ? e.getKey() : prefix + "." + e.getKey();
             out.add(path);
-            if (e.getValue() instanceof RtpYamlMapping) {
-                collectKeys((RtpYamlMapping) e.getValue(), path, out);
+            if (e.getValue() instanceof YamlMapping) {
+                collectKeys((YamlMapping) e.getValue(), path, out);
             }
         }
     }
@@ -314,71 +314,71 @@ public class RtpYamlSection {
     public void set(String key, Object value) {
         if (key == null || key.isEmpty()) throw new IllegalArgumentException("key must not be empty");
         String[] parts = key.split("\\.");
-        RtpYamlMapping cur = node;
+        YamlMapping cur = node;
         for (int i = 0; i < parts.length - 1; i++) {
-            RtpYamlNode child = cur.get(parts[i]);
-            if (child instanceof RtpYamlMapping) {
-                cur = (RtpYamlMapping) child;
+            YamlNode child = cur.get(parts[i]);
+            if (child instanceof YamlMapping) {
+                cur = (YamlMapping) child;
             } else {
-                RtpYamlMapping fresh = new RtpYamlMapping();
+                YamlMapping fresh = new YamlMapping();
                 cur.put(parts[i], fresh);
                 cur = fresh;
             }
         }
         String leaf = parts[parts.length - 1];
-        RtpYamlNode existing = cur.get(leaf);
+        YamlNode existing = cur.get(leaf);
         List<String> preservedComments = existing != null ? new ArrayList<>(existing.blockComments()) : null;
-        RtpYamlNode toStore = toNode(value);
+        YamlNode toStore = toNode(value);
         if (preservedComments != null) toStore.setBlockComments(preservedComments);
         cur.put(leaf, toStore);
     }
 
     /* ------------------------------------------------------------------ */
 
-    private RtpYamlNode resolve(String key, boolean createParents) {
+    private YamlNode resolve(String key, boolean createParents) {
         if (key == null || key.isEmpty()) return node;
         String[] parts = key.split("\\.");
-        RtpYamlNode cur = node;
+        YamlNode cur = node;
         for (int i = 0; i < parts.length; i++) {
-            if (!(cur instanceof RtpYamlMapping)) return null;
-            cur = ((RtpYamlMapping) cur).get(parts[i]);
+            if (!(cur instanceof YamlMapping)) return null;
+            cur = ((YamlMapping) cur).get(parts[i]);
             if (cur == null) return null;
         }
         return cur;
     }
 
-    private static Object coerce(RtpYamlNode n) {
+    private static Object coerce(YamlNode n) {
         if (n == null) return null;
-        if (n instanceof RtpYamlScalar) return ((RtpYamlScalar) n).value();
-        if (n instanceof RtpYamlMapping) return new RtpYamlSection((RtpYamlMapping) n);
-        if (n instanceof RtpYamlSequence) {
+        if (n instanceof YamlScalar) return ((YamlScalar) n).value();
+        if (n instanceof YamlMapping) return new YamlSection((YamlMapping) n);
+        if (n instanceof YamlSequence) {
             List<Object> out = new ArrayList<>();
-            for (RtpYamlNode item : ((RtpYamlSequence) n).items()) out.add(coerce(item));
+            for (YamlNode item : ((YamlSequence) n).items()) out.add(coerce(item));
             return out;
         }
         return null;
     }
 
-    private static RtpYamlNode toNode(Object value) {
-        if (value == null) return new RtpYamlScalar("", RtpYamlScalar.Style.PLAIN);
-        if (value instanceof RtpYamlNode) return (RtpYamlNode) value;
-        if (value instanceof RtpYamlSection) return ((RtpYamlSection) value).node;
+    private static YamlNode toNode(Object value) {
+        if (value == null) return new YamlScalar("", YamlScalar.Style.PLAIN);
+        if (value instanceof YamlNode) return (YamlNode) value;
+        if (value instanceof YamlSection) return ((YamlSection) value).node;
         if (value instanceof List<?>) {
-            RtpYamlSequence seq = new RtpYamlSequence();
+            YamlSequence seq = new YamlSequence();
             for (Object o : (List<?>) value) seq.add(toNode(o));
             return seq;
         }
         if (value instanceof java.util.Map<?, ?>) {
-            RtpYamlMapping m = new RtpYamlMapping();
+            YamlMapping m = new YamlMapping();
             for (var e : ((java.util.Map<?, ?>) value).entrySet()) {
                 m.put(String.valueOf(e.getKey()), toNode(e.getValue()));
             }
             return m;
         }
         if (value instanceof Boolean || value instanceof Number) {
-            return new RtpYamlScalar(String.valueOf(value), RtpYamlScalar.Style.PLAIN);
+            return new YamlScalar(String.valueOf(value), YamlScalar.Style.PLAIN);
         }
         // Strings (and everything else) get double-quoted to be safe.
-        return new RtpYamlScalar(String.valueOf(value), RtpYamlScalar.Style.DOUBLE);
+        return new YamlScalar(String.valueOf(value), YamlScalar.Style.DOUBLE);
     }
 }

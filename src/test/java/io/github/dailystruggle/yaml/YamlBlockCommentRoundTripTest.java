@@ -1,4 +1,4 @@
-package io.github.dailystruggle.rtp.common.configuration.yaml;
+package io.github.dailystruggle.yaml;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * Locks in the comment-preservation contract for the in-house YAML
  * substrate (ADR-025 §Migration step 4, ADR-042 block-only scope).
  */
-class RtpYamlBlockCommentRoundTripTest {
+class YamlBlockCommentRoundTripTest {
 
     @Test
     @DisplayName("ADR-025: block comments above a top-level key survive load→emit")
@@ -18,7 +18,7 @@ class RtpYamlBlockCommentRoundTripTest {
                 + "# header comment\n"
                 + "# second line\n"
                 + "teleportDelay: 2\n";
-        String out = RtpYamlWriter.emit(RtpYamlReader.parse(src));
+        String out = YamlWriter.emit(YamlReader.parse(src));
         assertEquals(src, out);
     }
 
@@ -30,7 +30,7 @@ class RtpYamlBlockCommentRoundTripTest {
                 + "teleportDelay: 2\n"
                 + "# cooldown comment\n"
                 + "teleportCooldown: 300\n";
-        RtpYamlConfig cfg = RtpYamlConfig.parse(src);
+        YamlConfig cfg = YamlConfig.parse(src);
         cfg.set("teleportCooldown", 600);
         String out = cfg.saveToString();
         assertTrue(out.contains("# delay comment"), out);
@@ -46,7 +46,7 @@ class RtpYamlBlockCommentRoundTripTest {
                 + "  # yaml, sqlite, mysql, or postgresql\n"
                 + "  type: \"sqlite\"\n"
                 + "  port: 3306\n";
-        String out = RtpYamlWriter.emit(RtpYamlReader.parse(src));
+        String out = YamlWriter.emit(YamlReader.parse(src));
         assertEquals(src, out);
     }
 
@@ -61,8 +61,8 @@ class RtpYamlBlockCommentRoundTripTest {
                 + "  type: \"sqlite\"\n"
                 + "  port: 3306\n"
                 + "version: \"3.0\"\n";
-        String once = RtpYamlWriter.emit(RtpYamlReader.parse(src));
-        String twice = RtpYamlWriter.emit(RtpYamlReader.parse(once));
+        String once = YamlWriter.emit(YamlReader.parse(src));
+        String twice = YamlWriter.emit(YamlReader.parse(once));
         assertEquals(once, twice);
     }
 
@@ -72,7 +72,7 @@ class RtpYamlBlockCommentRoundTripTest {
         String src = ""
                 + "# above the message key\n"
                 + "noLocationsQueued: \"#f5eb73[P0] no locations ready\"\n";
-        String out = RtpYamlWriter.emit(RtpYamlReader.parse(src));
+        String out = YamlWriter.emit(YamlReader.parse(src));
         assertEquals(src, out);
     }
 }

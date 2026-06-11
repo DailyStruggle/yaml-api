@@ -1,4 +1,4 @@
-package io.github.dailystruggle.rtp.common.configuration.yaml;
+package io.github.dailystruggle.yaml;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -10,12 +10,12 @@ import java.util.Set;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
- * Locks in the dotted-path semantics of {@link RtpYamlSection#getKeys(boolean)}
+ * Locks in the dotted-path semantics of {@link YamlSection#getKeys(boolean)}
  * (ADR-025 §Migration step 6). The shape of the output must match what
  * the prior simpleyaml-backed implementation produced so that no
  * call-site behaviour shifts when the substrate is swapped.
  */
-class RtpYamlDeepKeysParityTest {
+class YamlDeepKeysParityTest {
 
     @Test
     @DisplayName("getKeys(false) returns top-level keys in source order")
@@ -26,7 +26,7 @@ class RtpYamlDeepKeysParityTest {
                 + "  c: 2\n"
                 + "  d: 3\n"
                 + "e: 4\n";
-        RtpYamlConfig cfg = RtpYamlConfig.parse(src);
+        YamlConfig cfg = YamlConfig.parse(src);
         assertEquals(List.of("a", "b", "e"), List.copyOf(cfg.getKeys(false)));
     }
 
@@ -40,7 +40,7 @@ class RtpYamlDeepKeysParityTest {
                 + "  d:\n"
                 + "    e: 3\n"
                 + "f: 4\n";
-        RtpYamlConfig cfg = RtpYamlConfig.parse(src);
+        YamlConfig cfg = YamlConfig.parse(src);
         Set<String> got = cfg.getKeys(true);
         Set<String> expected = new LinkedHashSet<>(List.of("a", "b", "b.c", "b.d", "b.d.e", "f"));
         assertEquals(expected, got);
@@ -53,7 +53,7 @@ class RtpYamlDeepKeysParityTest {
                 + "database:\n"
                 + "  type: \"sqlite\"\n"
                 + "  port: 3306\n";
-        RtpYamlConfig cfg = RtpYamlConfig.parse(src);
+        YamlConfig cfg = YamlConfig.parse(src);
         assertEquals("sqlite", cfg.get("database.type"));
         assertEquals(3306, cfg.get("database.port"));
     }
@@ -61,7 +61,7 @@ class RtpYamlDeepKeysParityTest {
     @Test
     @DisplayName("set() with dotted path creates intermediate sections on demand")
     void dottedSetCreatesParents() {
-        RtpYamlConfig cfg = RtpYamlConfig.parse("");
+        YamlConfig cfg = YamlConfig.parse("");
         cfg.set("a.b.c", 42);
         assertEquals(42, cfg.get("a.b.c"));
         Set<String> deep = cfg.getKeys(true);

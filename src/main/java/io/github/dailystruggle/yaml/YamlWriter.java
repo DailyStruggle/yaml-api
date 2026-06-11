@@ -1,4 +1,4 @@
-package io.github.dailystruggle.rtp.common.configuration.yaml;
+package io.github.dailystruggle.yaml;
 
 import java.util.List;
 import java.util.Map;
@@ -14,22 +14,22 @@ import java.util.Map;
  *   <li>Block comments above a node are emitted as {@code # <text>}
  *       lines at the node's indent, immediately before the node line.</li>
  *   <li>Scalar quoting style is preserved from the parsed AST
- *       ({@link RtpYamlScalar.Style#PLAIN}, {@code SINGLE}, {@code DOUBLE}).
+ *       ({@link YamlScalar.Style#PLAIN}, {@code SINGLE}, {@code DOUBLE}).
  *       The writer never silently re-quotes a value.</li>
  *   <li>Mapping insertion order is preserved.</li>
  *   <li>Sequences are emitted block-style only ({@code - item} per line).</li>
  * </ul>
  */
-public final class RtpYamlWriter {
+public final class YamlWriter {
 
     private static final String NL = "\n";
 
     private final StringBuilder out = new StringBuilder();
 
-    private RtpYamlWriter() {}
+    private YamlWriter() {}
 
-    public static String emit(RtpYamlMapping root) {
-        RtpYamlWriter w = new RtpYamlWriter();
+    public static String emit(YamlMapping root) {
+        YamlWriter w = new YamlWriter();
         w.writeMapping(root, 0, true);
         if (!root.trailingComments().isEmpty()) {
             // Separate trailing comments from the last entry with a blank
@@ -41,30 +41,30 @@ public final class RtpYamlWriter {
         return w.out.toString();
     }
 
-    private void writeMapping(RtpYamlMapping mapping, int indent, boolean isRoot) {
-        Map<String, RtpYamlNode> entries = mapping.entries();
+    private void writeMapping(YamlMapping mapping, int indent, boolean isRoot) {
+        Map<String, YamlNode> entries = mapping.entries();
         boolean first = true;
-        for (Map.Entry<String, RtpYamlNode> e : entries.entrySet()) {
+        for (Map.Entry<String, YamlNode> e : entries.entrySet()) {
             String key = e.getKey();
-            RtpYamlNode value = e.getValue();
+            YamlNode value = e.getValue();
             // Emit block comments above this entry.
             writeBlockComments(value.blockComments(), indent);
             // Emit the key line.
             writeIndent(indent);
             out.append(quoteKeyIfNeeded(key)).append(':');
-            if (value instanceof RtpYamlScalar) {
-                RtpYamlScalar sc = (RtpYamlScalar) value;
+            if (value instanceof YamlScalar) {
+                YamlScalar sc = (YamlScalar) value;
                 if (isEmptyScalar(sc)) {
                     out.append(NL);
                 } else {
                     out.append(' ').append(emitScalar(sc)).append(NL);
                 }
-            } else if (value instanceof RtpYamlMapping) {
+            } else if (value instanceof YamlMapping) {
                 out.append(NL);
-                writeMapping((RtpYamlMapping) value, indent + 2, false);
-            } else if (value instanceof RtpYamlSequence) {
+                writeMapping((YamlMapping) value, indent + 2, false);
+            } else if (value instanceof YamlSequence) {
                 out.append(NL);
-                writeSequence((RtpYamlSequence) value, indent + 2);
+                writeSequence((YamlSequence) value, indent + 2);
             } else {
                 out.append(NL);
             }
@@ -72,28 +72,28 @@ public final class RtpYamlWriter {
         }
     }
 
-    private void writeSequence(RtpYamlSequence seq, int indent) {
-        for (RtpYamlNode item : seq.items()) {
+    private void writeSequence(YamlSequence seq, int indent) {
+        for (YamlNode item : seq.items()) {
             writeBlockComments(item.blockComments(), indent);
             writeIndent(indent);
             out.append('-');
-            if (item instanceof RtpYamlScalar) {
-                RtpYamlScalar sc = (RtpYamlScalar) item;
+            if (item instanceof YamlScalar) {
+                YamlScalar sc = (YamlScalar) item;
                 if (isEmptyScalar(sc)) {
                     out.append(NL);
                 } else {
                     out.append(' ').append(emitScalar(sc)).append(NL);
                 }
-            } else if (item instanceof RtpYamlMapping) {
+            } else if (item instanceof YamlMapping) {
                 // Emit the first mapping entry inline after "- ", subsequent
                 // entries indented by 2 more spaces.
-                RtpYamlMapping m = (RtpYamlMapping) item;
-                Map<String, RtpYamlNode> entries = m.entries();
+                YamlMapping m = (YamlMapping) item;
+                Map<String, YamlNode> entries = m.entries();
                 if (entries.isEmpty()) {
                     out.append(NL);
                 } else {
                     boolean firstEntry = true;
-                    for (Map.Entry<String, RtpYamlNode> e : entries.entrySet()) {
+                    for (Map.Entry<String, YamlNode> e : entries.entrySet()) {
                         if (firstEntry) {
                             out.append(' ').append(quoteKeyIfNeeded(e.getKey())).append(':');
                             emitInlineOrBlock(e.getValue(), indent + 2);
@@ -106,29 +106,29 @@ public final class RtpYamlWriter {
                         }
                     }
                 }
-            } else if (item instanceof RtpYamlSequence) {
+            } else if (item instanceof YamlSequence) {
                 out.append(NL);
-                writeSequence((RtpYamlSequence) item, indent + 2);
+                writeSequence((YamlSequence) item, indent + 2);
             } else {
                 out.append(NL);
             }
         }
     }
 
-    private void emitInlineOrBlock(RtpYamlNode value, int indent) {
-        if (value instanceof RtpYamlScalar) {
-            RtpYamlScalar sc = (RtpYamlScalar) value;
+    private void emitInlineOrBlock(YamlNode value, int indent) {
+        if (value instanceof YamlScalar) {
+            YamlScalar sc = (YamlScalar) value;
             if (isEmptyScalar(sc)) {
                 out.append(NL);
             } else {
                 out.append(' ').append(emitScalar(sc)).append(NL);
             }
-        } else if (value instanceof RtpYamlMapping) {
+        } else if (value instanceof YamlMapping) {
             out.append(NL);
-            writeMapping((RtpYamlMapping) value, indent + 2, false);
-        } else if (value instanceof RtpYamlSequence) {
+            writeMapping((YamlMapping) value, indent + 2, false);
+        } else if (value instanceof YamlSequence) {
             out.append(NL);
-            writeSequence((RtpYamlSequence) value, indent + 2);
+            writeSequence((YamlSequence) value, indent + 2);
         } else {
             out.append(NL);
         }
@@ -136,7 +136,7 @@ public final class RtpYamlWriter {
 
     private void writeBlockComments(List<String> comments, int indent) {
         for (String line : comments) {
-            if (RtpYamlReader.BLANK_LINE_SENTINEL.equals(line)) {
+            if (YamlReader.BLANK_LINE_SENTINEL.equals(line)) {
                 out.append(NL);
                 continue;
             }
@@ -151,11 +151,11 @@ public final class RtpYamlWriter {
         for (int i = 0; i < n; i++) out.append(' ');
     }
 
-    private static boolean isEmptyScalar(RtpYamlScalar sc) {
-        return sc.style() == RtpYamlScalar.Style.PLAIN && sc.rawValue().isEmpty();
+    private static boolean isEmptyScalar(YamlScalar sc) {
+        return sc.style() == YamlScalar.Style.PLAIN && sc.rawValue().isEmpty();
     }
 
-    private static String emitScalar(RtpYamlScalar sc) {
+    private static String emitScalar(YamlScalar sc) {
         switch (sc.style()) {
             case DOUBLE: return "\"" + escapeDouble(sc.rawValue()) + "\"";
             case SINGLE: return "'" + sc.rawValue().replace("'", "''") + "'";

@@ -1,4 +1,4 @@
-package io.github.dailystruggle.rtp.common.configuration.yaml;
+package io.github.dailystruggle.yaml;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -8,16 +8,16 @@ import java.util.Set;
  * Mapping node: an ordered collection of {@code key: value} pairs.
  *
  * <p>Insertion order is preserved via {@link LinkedHashMap} — important
- * for idempotent re-emit per ADR-042. Keys are strings (RTP's YAML
+ * for idempotent re-emit per ADR-042. Keys are strings (YAML's YAML
  * subset does not permit non-scalar mapping keys).</p>
  *
  * <p>Block comments above the mapping itself live on this node;
  * comments above individual entries live on the entry's child node
  * (scalar / mapping / sequence).</p>
  */
-public final class RtpYamlMapping extends RtpYamlNode {
+public final class YamlMapping extends YamlNode {
 
-    private final Map<String, RtpYamlNode> entries = new LinkedHashMap<>();
+    private final Map<String, YamlNode> entries = new LinkedHashMap<>();
 
     /**
      * Trailing comment lines (block comments that follow the last entry
@@ -30,15 +30,15 @@ public final class RtpYamlMapping extends RtpYamlNode {
         return entries.keySet();
     }
 
-    public Map<String, RtpYamlNode> entries() {
+    public Map<String, YamlNode> entries() {
         return entries;
     }
 
-    public RtpYamlNode get(String key) {
+    public YamlNode get(String key) {
         return entries.get(key);
     }
 
-    public void put(String key, RtpYamlNode value) {
+    public void put(String key, YamlNode value) {
         entries.put(key, value);
     }
 

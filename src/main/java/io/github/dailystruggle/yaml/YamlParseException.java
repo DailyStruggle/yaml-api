@@ -1,8 +1,8 @@
-package io.github.dailystruggle.rtp.common.configuration.yaml;
+package io.github.dailystruggle.yaml;
 
 /**
- * Thrown when {@link RtpYamlReader} encounters a YAML construct outside
- * the RTP-supported subset (anchors, aliases, merge keys, flow style,
+ * Thrown when {@link YamlReader} encounters a YAML construct outside
+ * the YAML-supported subset (anchors, aliases, merge keys, flow style,
  * tags, document separators, block scalars) or a syntactic error.
  *
  * <p>Carries 1-based line/column information so callers can surface
@@ -10,13 +10,13 @@ package io.github.dailystruggle.rtp.common.configuration.yaml;
  * the stable identifier intended to map to a {@code messages.yml} key
  * (see ADR-025 §Migration Step 5).</p>
  */
-public final class RtpYamlParseException extends RuntimeException {
+public final class YamlParseException extends RuntimeException {
 
     private final int line;
     private final int column;
     private final String messageKey;
 
-    public RtpYamlParseException(String messageKey, String detail, int line, int column) {
+    public YamlParseException(String messageKey, String detail, int line, int column) {
         super("line " + line + ", column " + column + ": " + detail);
         this.messageKey = messageKey;
         this.line = line;

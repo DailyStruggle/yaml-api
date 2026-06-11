@@ -1,4 +1,4 @@
-package io.github.dailystruggle.rtp.common.configuration.yaml;
+package io.github.dailystruggle.yaml;
 
 /**
  * Scalar node: a single value parsed from a YAML scalar token.
@@ -15,14 +15,14 @@ package io.github.dailystruggle.rtp.common.configuration.yaml;
  * {@link #style} field lets the writer re-emit the scalar using its
  * original quoting style — important for idempotent round-trip.</p>
  */
-public final class RtpYamlScalar extends RtpYamlNode {
+public final class YamlScalar extends YamlNode {
 
     public enum Style { PLAIN, SINGLE, DOUBLE }
 
     private final String rawValue;
     private final Style style;
 
-    public RtpYamlScalar(String rawValue, Style style) {
+    public YamlScalar(String rawValue, Style style) {
         this.rawValue = rawValue == null ? "" : rawValue;
         this.style = style == null ? Style.PLAIN : style;
     }

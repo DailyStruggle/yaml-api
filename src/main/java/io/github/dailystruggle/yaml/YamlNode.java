@@ -1,4 +1,4 @@
-package io.github.dailystruggle.rtp.common.configuration.yaml;
+package io.github.dailystruggle.yaml;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +15,7 @@ import java.util.List;
  * <p>Each node also remembers its 1-based source line position so future
  * surgical-edit writers can locate it without re-tokenising.</p>
  */
-public abstract class RtpYamlNode {
+public abstract class YamlNode {
 
     /**
      * Lines of the block comment immediately above this node, in source

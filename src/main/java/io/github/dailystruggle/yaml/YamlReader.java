@@ -1,4 +1,4 @@
-package io.github.dailystruggle.rtp.common.configuration.yaml;
+package io.github.dailystruggle.yaml;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * Recursive-descent parser for the RTP-supported YAML subset.
+ * Recursive-descent parser for the YAML-supported YAML subset.
  *
  * <p>Subset (per ADR-025 §Migration / 2026-05-15 revision):</p>
  * <ul>
@@ -22,20 +22,20 @@ import java.util.List;
  *       contract on the write side).</li>
  * </ul>
  *
- * <p>Rejected (each raises {@link RtpYamlParseException} with a stable
+ * <p>Rejected (each raises {@link YamlParseException} with a stable
  * {@code messageKey}):</p>
  * <ul>
- *   <li>Anchors ({@code &name}) — {@code rtpYaml.unsupported.anchor}</li>
- *   <li>Aliases ({@code *name}) — {@code rtpYaml.unsupported.alias}</li>
- *   <li>Merge keys ({@code <<:}) — {@code rtpYaml.unsupported.mergeKey}</li>
- *   <li>Flow mappings ({@code {a: b}}) — {@code rtpYaml.unsupported.flowMap}</li>
- *   <li>Flow sequences ({@code [a, b]}) — {@code rtpYaml.unsupported.flowSeq}</li>
- *   <li>Tags ({@code !!str}) — {@code rtpYaml.unsupported.tag}</li>
- *   <li>Document separators ({@code ---}, {@code ...}) — {@code rtpYaml.unsupported.docSep}</li>
- *   <li>Block scalars ({@code |}, {@code >}) — {@code rtpYaml.unsupported.blockScalar}</li>
+ *   <li>Anchors ({@code &name}) — {@code yaml.unsupported.anchor}</li>
+ *   <li>Aliases ({@code *name}) — {@code yaml.unsupported.alias}</li>
+ *   <li>Merge keys ({@code <<:}) — {@code yaml.unsupported.mergeKey}</li>
+ *   <li>Flow mappings ({@code {a: b}}) — {@code yaml.unsupported.flowMap}</li>
+ *   <li>Flow sequences ({@code [a, b]}) — {@code yaml.unsupported.flowSeq}</li>
+ *   <li>Tags ({@code !!str}) — {@code yaml.unsupported.tag}</li>
+ *   <li>Document separators ({@code ---}, {@code ...}) — {@code yaml.unsupported.docSep}</li>
+ *   <li>Block scalars ({@code |}, {@code >}) — {@code yaml.unsupported.blockScalar}</li>
  * </ul>
  */
-public final class RtpYamlReader {
+public final class YamlReader {
 
     /** A pre-lexed source line with its indent + payload classification. */
     private static final class RawLine {
@@ -68,12 +68,12 @@ public final class RtpYamlReader {
     /** Sentinel value placed in a comment list to mark a blank source line. */
     static final String BLANK_LINE_SENTINEL = "\u0000BLANK";
 
-    private RtpYamlReader(List<RawLine> lines) {
+    private YamlReader(List<RawLine> lines) {
         this.lines = lines;
         this.pos = 0;
     }
 
-    public static RtpYamlMapping parse(String source) {
+    public static YamlMapping parse(String source) {
         // Strip a UTF-8 BOM (U+FEFF) if present at position 0. Files written
         // by PowerShell `Add-Content -Encoding utf8` (and several other
         // common Windows tools) prepend a BOM by default; without this
@@ -83,8 +83,8 @@ public final class RtpYamlReader {
             source = source.substring(1);
         }
         List<RawLine> raw = lex(source);
-        RtpYamlReader r = new RtpYamlReader(raw);
-        RtpYamlMapping root = new RtpYamlMapping();
+        YamlReader r = new YamlReader(raw);
+        YamlMapping root = new YamlMapping();
         root.setSourcePosition(1, 0);
         // Capture any document-leading comment block as the root mapping's
         // own blockComments. parseMappingBody fills pendingComments with
@@ -113,7 +113,7 @@ public final class RtpYamlReader {
                 r.pos++;
                 continue;
             }
-            throw new RtpYamlParseException("rtpYaml.syntax.trailingContent",
+            throw new YamlParseException("yaml.syntax.trailingContent",
                     "unexpected content after top-level mapping", ln.lineNo, ln.indent);
         }
         trimSentinels(root.trailingComments());
@@ -132,7 +132,7 @@ public final class RtpYamlReader {
         }
     }
 
-    public static RtpYamlMapping parse(Reader reader) throws IOException {
+    public static YamlMapping parse(Reader reader) throws IOException {
         StringBuilder sb = new StringBuilder();
         try (BufferedReader br = (reader instanceof BufferedReader) ? (BufferedReader) reader : new BufferedReader(reader)) {
             char[] buf = new char[4096];
@@ -159,7 +159,7 @@ public final class RtpYamlReader {
             int indent = 0;
             while (indent < raw.length() && raw.charAt(indent) == ' ') indent++;
             if (indent < raw.length() && raw.charAt(indent) == '\t') {
-                throw new RtpYamlParseException("rtpYaml.syntax.tabIndent",
+                throw new YamlParseException("yaml.syntax.tabIndent",
                         "tabs in indentation are not allowed", lineNo, indent);
             }
             String content = raw.substring(indent);
@@ -167,11 +167,11 @@ public final class RtpYamlReader {
             boolean comment = !blank && content.charAt(0) == '#';
             // Reject document separators eagerly.
             if (!blank && (content.equals("---") || content.startsWith("--- "))) {
-                throw new RtpYamlParseException("rtpYaml.unsupported.docSep",
+                throw new YamlParseException("yaml.unsupported.docSep",
                         "document separators are not supported", lineNo, indent);
             }
             if (!blank && (content.equals("...") || content.startsWith("... "))) {
-                throw new RtpYamlParseException("rtpYaml.unsupported.docSep",
+                throw new YamlParseException("yaml.unsupported.docSep",
                         "document separators are not supported", lineNo, indent);
             }
             out.add(new RawLine(lineNo, indent, content, blank, comment));
@@ -186,7 +186,7 @@ public final class RtpYamlReader {
      * blank/comment lines, attaching the latest comment-run to the next
      * entry.
      */
-    private void parseMappingBody(RtpYamlMapping mapping, int expectedIndent) {
+    private void parseMappingBody(YamlMapping mapping, int expectedIndent) {
         while (pos < lines.size()) {
             RawLine ln = lines.get(pos);
             if (ln.blank) {
@@ -214,18 +214,18 @@ public final class RtpYamlReader {
                 return;
             }
             if (ln.indent > expectedIndent) {
-                throw new RtpYamlParseException("rtpYaml.syntax.unexpectedIndent",
+                throw new YamlParseException("yaml.syntax.unexpectedIndent",
                         "unexpected indentation", ln.lineNo, ln.indent);
             }
             // A list item at mapping scope is an error; mappings have key: ... entries.
             if (ln.content.startsWith("- ") || ln.content.equals("-")) {
-                throw new RtpYamlParseException("rtpYaml.syntax.listAtMapping",
+                throw new YamlParseException("yaml.syntax.listAtMapping",
                         "sequence item where mapping entry expected", ln.lineNo, ln.indent);
             }
             // Parse one entry: key, then either inline value or child block.
             ParsedKey pk = parseKey(ln);
             if (pk.isMergeKey) {
-                throw new RtpYamlParseException("rtpYaml.unsupported.mergeKey",
+                throw new YamlParseException("yaml.unsupported.mergeKey",
                         "merge keys (<<:) are not supported", ln.lineNo, ln.indent);
             }
             pos++;
@@ -236,7 +236,7 @@ public final class RtpYamlReader {
             trimSentinels(attached);
             pendingComments.clear();
             String afterColon = pk.afterColon;
-            RtpYamlNode child;
+            YamlNode child;
             if (afterColon.isEmpty()) {
                 // Look ahead for an indented child block; otherwise this is an
                 // empty-scalar value (null).
@@ -258,7 +258,7 @@ public final class RtpYamlReader {
      * whether the child is a mapping, a sequence, or an empty scalar
      * (when the next non-blank line is at a shallower indent or EOF).
      */
-    private RtpYamlNode parseChildBlock(int parentIndent) {
+    private YamlNode parseChildBlock(int parentIndent) {
         // Skip blanks/comments to peek at indent of the next content line.
         int peek = pos;
         List<String> bufferedComments = new ArrayList<>();
@@ -269,27 +269,27 @@ public final class RtpYamlReader {
             break;
         }
         if (peek >= lines.size()) {
-            return new RtpYamlScalar("", RtpYamlScalar.Style.PLAIN);
+            return new YamlScalar("", YamlScalar.Style.PLAIN);
         }
         RawLine next = lines.get(peek);
         if (next.indent <= parentIndent) {
-            return new RtpYamlScalar("", RtpYamlScalar.Style.PLAIN);
+            return new YamlScalar("", YamlScalar.Style.PLAIN);
         }
         // Decide: sequence if next starts with "- " or equals "-"; else mapping.
         if (next.content.startsWith("- ") || next.content.equals("-")) {
-            RtpYamlSequence seq = new RtpYamlSequence();
+            YamlSequence seq = new YamlSequence();
             seq.setSourcePosition(next.lineNo, next.indent);
             parseSequenceBody(seq, next.indent);
             return seq;
         } else {
-            RtpYamlMapping map = new RtpYamlMapping();
+            YamlMapping map = new YamlMapping();
             map.setSourcePosition(next.lineNo, next.indent);
             parseMappingBody(map, next.indent);
             return map;
         }
     }
 
-    private void parseSequenceBody(RtpYamlSequence seq, int expectedIndent) {
+    private void parseSequenceBody(YamlSequence seq, int expectedIndent) {
         while (pos < lines.size()) {
             RawLine ln = lines.get(pos);
             if (ln.blank) {
@@ -302,7 +302,7 @@ public final class RtpYamlReader {
             if (ln.comment) { pendingComments.add(stripCommentMarker(ln.content)); pos++; continue; }
             if (ln.indent < expectedIndent) return;
             if (ln.indent > expectedIndent) {
-                throw new RtpYamlParseException("rtpYaml.syntax.unexpectedIndent",
+                throw new YamlParseException("yaml.syntax.unexpectedIndent",
                         "unexpected indentation in sequence", ln.lineNo, ln.indent);
             }
             if (!(ln.content.startsWith("- ") || ln.content.equals("-"))) {
@@ -316,17 +316,17 @@ public final class RtpYamlReader {
             trimSentinels(attachedItem);
             pendingComments.clear();
             String after = ln.content.equals("-") ? "" : ln.content.substring(2);
-            RtpYamlNode item;
+            YamlNode item;
             if (after.isEmpty()) {
                 item = parseChildBlock(ln.indent);
             } else if (looksLikeKey(after)) {
                 // List item that's a mapping: rebuild as an inline mapping
                 // entry, plus any indented continuation.
-                RtpYamlMapping itemMap = new RtpYamlMapping();
+                YamlMapping itemMap = new YamlMapping();
                 itemMap.setSourcePosition(ln.lineNo, ln.indent + 2);
                 // Synthesize a single-entry mapping line for parseKey.
                 ParsedKey pk = parseKey(new RawLine(ln.lineNo, ln.indent + 2, after, false, false));
-                RtpYamlNode child;
+                YamlNode child;
                 if (pk.afterColon.isEmpty()) {
                     child = parseChildBlock(ln.indent + 2);
                 } else {
@@ -365,15 +365,15 @@ public final class RtpYamlReader {
         String c = ln.content;
         // Reject anchors/aliases/tags/flow at line start.
         char first = c.charAt(0);
-        if (first == '&') throw new RtpYamlParseException("rtpYaml.unsupported.anchor",
+        if (first == '&') throw new YamlParseException("yaml.unsupported.anchor",
                 "anchors are not supported", ln.lineNo, ln.indent);
-        if (first == '*') throw new RtpYamlParseException("rtpYaml.unsupported.alias",
+        if (first == '*') throw new YamlParseException("yaml.unsupported.alias",
                 "aliases are not supported", ln.lineNo, ln.indent);
-        if (first == '!') throw new RtpYamlParseException("rtpYaml.unsupported.tag",
+        if (first == '!') throw new YamlParseException("yaml.unsupported.tag",
                 "tags are not supported", ln.lineNo, ln.indent);
-        if (first == '{') throw new RtpYamlParseException("rtpYaml.unsupported.flowMap",
+        if (first == '{') throw new YamlParseException("yaml.unsupported.flowMap",
                 "flow mappings are not supported", ln.lineNo, ln.indent);
-        if (first == '[') throw new RtpYamlParseException("rtpYaml.unsupported.flowSeq",
+        if (first == '[') throw new YamlParseException("yaml.unsupported.flowSeq",
                 "flow sequences are not supported", ln.lineNo, ln.indent);
 
         // Merge-key form: "<<:"
@@ -397,7 +397,7 @@ public final class RtpYamlReader {
                 i++;
             }
             if (i >= c.length() || c.charAt(i) != q) {
-                throw new RtpYamlParseException("rtpYaml.syntax.unterminatedQuote",
+                throw new YamlParseException("yaml.syntax.unterminatedQuote",
                         "unterminated quoted key", ln.lineNo, ln.indent);
             }
             keyText = unquote(c.substring(0, i + 1));
@@ -406,14 +406,14 @@ public final class RtpYamlReader {
         } else {
             colonAt = c.indexOf(':');
             if (colonAt < 0) {
-                throw new RtpYamlParseException("rtpYaml.syntax.missingColon",
+                throw new YamlParseException("yaml.syntax.missingColon",
                         "missing ':' in mapping entry", ln.lineNo, ln.indent);
             }
             keyText = c.substring(0, colonAt).trim();
             keyLen = colonAt;
         }
         if (colonAt < 0) {
-            throw new RtpYamlParseException("rtpYaml.syntax.missingColon",
+            throw new YamlParseException("yaml.syntax.missingColon",
                     "missing ':' in mapping entry", ln.lineNo, ln.indent);
         }
         String afterColon = c.substring(colonAt + 1);
@@ -449,20 +449,20 @@ public final class RtpYamlReader {
         return idx == s.length() - 1 || s.charAt(idx + 1) == ' ';
     }
 
-    private static RtpYamlScalar parseInlineScalar(String text, int line, int column) {
-        if (text.isEmpty()) return new RtpYamlScalar("", RtpYamlScalar.Style.PLAIN);
+    private static YamlScalar parseInlineScalar(String text, int line, int column) {
+        if (text.isEmpty()) return new YamlScalar("", YamlScalar.Style.PLAIN);
         char first = text.charAt(0);
-        if (first == '&') throw new RtpYamlParseException("rtpYaml.unsupported.anchor",
+        if (first == '&') throw new YamlParseException("yaml.unsupported.anchor",
                 "anchors are not supported", line, column);
-        if (first == '*') throw new RtpYamlParseException("rtpYaml.unsupported.alias",
+        if (first == '*') throw new YamlParseException("yaml.unsupported.alias",
                 "aliases are not supported", line, column);
-        if (first == '!') throw new RtpYamlParseException("rtpYaml.unsupported.tag",
+        if (first == '!') throw new YamlParseException("yaml.unsupported.tag",
                 "tags are not supported", line, column);
-        if (first == '{') throw new RtpYamlParseException("rtpYaml.unsupported.flowMap",
+        if (first == '{') throw new YamlParseException("yaml.unsupported.flowMap",
                 "flow mappings are not supported", line, column);
-        if (first == '[') throw new RtpYamlParseException("rtpYaml.unsupported.flowSeq",
+        if (first == '[') throw new YamlParseException("yaml.unsupported.flowSeq",
                 "flow sequences are not supported", line, column);
-        if (first == '|' || first == '>') throw new RtpYamlParseException("rtpYaml.unsupported.blockScalar",
+        if (first == '|' || first == '>') throw new YamlParseException("yaml.unsupported.blockScalar",
                 "block scalars are not supported", line, column);
         if (first == '"' || first == '\'') {
             // Quoted scalar: span must be the entire trimmed value.
@@ -476,14 +476,14 @@ public final class RtpYamlReader {
                 i++;
             }
             if (i >= text.length()) {
-                throw new RtpYamlParseException("rtpYaml.syntax.unterminatedQuote",
+                throw new YamlParseException("yaml.syntax.unterminatedQuote",
                         "unterminated quoted scalar", line, column);
             }
             String body = text.substring(1, i);
             String unescaped = (q == '"') ? unescapeDouble(body) : body.replace("''", "'");
-            return new RtpYamlScalar(unescaped, q == '"' ? RtpYamlScalar.Style.DOUBLE : RtpYamlScalar.Style.SINGLE);
+            return new YamlScalar(unescaped, q == '"' ? YamlScalar.Style.DOUBLE : YamlScalar.Style.SINGLE);
         }
-        return new RtpYamlScalar(text, RtpYamlScalar.Style.PLAIN);
+        return new YamlScalar(text, YamlScalar.Style.PLAIN);
     }
 
     /** Strip an unquoted trailing {@code # ...} comment from a scalar tail. */
@@ -551,6 +551,6 @@ public final class RtpYamlReader {
     }
 
     // Convenience for tests
-    public static RtpYamlMapping parseString(String s) { return parse(s); }
-    public static RtpYamlMapping parseFromReader(StringReader r) throws IOException { return parse(r); }
+    public static YamlMapping parseString(String s) { return parse(s); }
+    public static YamlMapping parseFromReader(StringReader r) throws IOException { return parse(r); }
 }

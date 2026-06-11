@@ -1,4 +1,4 @@
-package io.github.dailystruggle.rtp.common.configuration.yaml;
+package io.github.dailystruggle.yaml;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -9,15 +9,15 @@ import java.util.List;
  * <p>Per ADR-025 the YAML subset is block-style only — flow sequences
  * ({@code [a, b, c]}) are rejected at parse time.</p>
  */
-public final class RtpYamlSequence extends RtpYamlNode {
+public final class YamlSequence extends YamlNode {
 
-    private final List<RtpYamlNode> items = new ArrayList<>();
+    private final List<YamlNode> items = new ArrayList<>();
 
-    public List<RtpYamlNode> items() {
+    public List<YamlNode> items() {
         return items;
     }
 
-    public void add(RtpYamlNode node) {
+    public void add(YamlNode node) {
         items.add(node);
     }
 
@@ -25,7 +25,7 @@ public final class RtpYamlSequence extends RtpYamlNode {
         return items.size();
     }
 
-    public RtpYamlNode get(int i) {
+    public YamlNode get(int i) {
         return items.get(i);
     }
 }

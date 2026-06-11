@@ -1,4 +1,4 @@
-package io.github.dailystruggle.rtp.common.configuration.yaml;
+package io.github.dailystruggle.yaml;
 
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.DynamicTest;
@@ -18,12 +18,12 @@ import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
 /**
  * End-to-end read → write → save → reload → similarity test over every
- * shipped {@code .yml} under {@code rtp-plugin/src/main/resources/}.
+ * shipped {@code .yml} under {@code YAML-plugin/src/main/resources/}.
  *
- * <p>Unlike {@link RtpYamlShippedDefaultsGoldenFileTest}, which only
+ * <p>Unlike {@link YamlShippedDefaultsGoldenFileTest}, which only
  * exercises in-memory parse∘emit∘parse∘emit byte-stability, this test
- * runs the full disk round-trip through {@link RtpYamlConfig#load(File)}
- * and {@link RtpYamlConfig#save(File)} (temp-file + atomic rename),
+ * runs the full disk round-trip through {@link YamlConfig#load(File)}
+ * and {@link YamlConfig#save(File)} (temp-file + atomic rename),
  * then reloads from disk and asserts:
  * <ul>
  *     <li>the saved bytes equal the canonical re-emit of the loaded source
@@ -32,14 +32,14 @@ import static org.junit.jupiter.api.DynamicTest.dynamicTest;
  *         ({@code getKeys(deep=true)}) matches the original's.</li>
  * </ul>
  */
-class RtpYamlShippedReadWriteSaveSimilarityTest {
+class YamlShippedReadWriteSaveSimilarityTest {
 
     private static Path shippedRoot() {
         Path cwd = Paths.get("").toAbsolutePath();
-        Path direct = cwd.resolve("rtp-plugin/src/main/resources");
+        Path direct = cwd.resolve("YAML-plugin/src/main/resources");
         if (Files.isDirectory(direct)) return direct;
         Path fromModule = cwd.getParent() != null
-                ? cwd.getParent().resolve("rtp-plugin/src/main/resources")
+                ? cwd.getParent().resolve("YAML-plugin/src/main/resources")
                 : null;
         if (fromModule != null && Files.isDirectory(fromModule)) return fromModule;
         return null;
@@ -69,7 +69,7 @@ class RtpYamlShippedReadWriteSaveSimilarityTest {
     private void assertDiskRoundTrip(Path source) throws IOException {
         // 1. Read shipped file through the public API.
         File original = source.toFile();
-        RtpYamlConfig loaded = RtpYamlConfig.load(original);
+        YamlConfig loaded = YamlConfig.load(original);
 
         // 2. Canonical emit (what save() should write).
         String canonical = loaded.saveToString();
@@ -85,7 +85,7 @@ class RtpYamlShippedReadWriteSaveSimilarityTest {
                 "save(File) bytes differ from saveToString() for " + source);
 
         // 5. Reload from disk — must succeed and round-trip byte-stably.
-        RtpYamlConfig reloaded = RtpYamlConfig.load(target.toFile());
+        YamlConfig reloaded = YamlConfig.load(target.toFile());
         String reemitted = reloaded.saveToString();
         assertEquals(canonical, reemitted,
                 "Reload→emit not idempotent for " + source);

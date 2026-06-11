@@ -59,14 +59,14 @@ Add the JitPack repository to your `pom.xml`:
 
 ```java
 File file = new File("config.yml");
-RtpYamlConfig config = RtpYamlConfig.load(file);
+YamlConfig config = YamlConfig.load(file);
 ```
 
 Or parse from a string:
 
 ```java
 String yaml = "key: value\n# comment\ncount: 5";
-RtpYamlConfig config = RtpYamlConfig.parse(yaml);
+YamlConfig config = YamlConfig.parse(yaml);
 ```
 
 ### Reading Values
@@ -100,10 +100,10 @@ String yamlString = config.saveToString();
 
 ## Project Structure
 
-- `RtpYamlConfig`: The main entry point for loading and saving YAML documents.
-- `RtpYamlSection`: Represents a section of a YAML document, providing methods to access and modify data.
-- `RtpYamlReader` / `RtpYamlWriter`: Internal classes handling the parsing and emission of YAML content.
-- `RtpYamlNode` and subclasses: Represent the internal tree structure of the YAML document.
+- `YamlConfig`: The main entry point for loading and saving YAML documents.
+- `YamlSection`: Represents a section of a YAML document, providing methods to access and modify data.
+- `YamlReader` / `YamlWriter`: Internal classes handling the parsing and emission of YAML content.
+- `YamlNode` and subclasses: Represent the internal tree structure of the YAML document.
 
 ## Testing
 

@@ -1,4 +1,4 @@
-package io.github.dailystruggle.rtp.common.configuration.yaml;
+package io.github.dailystruggle.yaml;
 
 import java.io.File;
 import java.io.IOException;
@@ -12,7 +12,7 @@ import java.nio.file.StandardCopyOption;
 
 /**
  * Top-level YAML document handle, equivalent to {@code simpleyaml}'s
- * {@code YamlFile}. A {@code RtpYamlConfig} is a {@link RtpYamlSection}
+ * {@code YamlFile}. A {@code YamlConfig} is a {@link YamlSection}
  * over the root mapping plus file-backing for load/save.
  *
  * <p>Per ADR-025 (2026-05-15 revision) this class is the public entry
@@ -27,12 +27,12 @@ import java.nio.file.StandardCopyOption;
  * {@link java.nio.file.Files#move(Path, Path, java.nio.file.CopyOption...)}
  * with {@link StandardCopyOption#ATOMIC_MOVE}.)</p>
  */
-public final class RtpYamlConfig extends RtpYamlSection {
+public final class YamlConfig extends YamlSection {
 
     private File file;
-    private final RtpYamlOptions options = new RtpYamlOptions();
+    private final YamlOptions options = new YamlOptions();
 
-    private RtpYamlConfig(File file, RtpYamlMapping root) {
+    private YamlConfig(File file, YamlMapping root) {
         super(root);
         this.file = file;
     }
@@ -42,8 +42,8 @@ public final class RtpYamlConfig extends RtpYamlSection {
      * {@code new YamlFile(String path)}. The file is not read until
      * {@link #load()} / {@link #loadWithComments()} is called.
      */
-    public RtpYamlConfig(String path) {
-        this(path == null ? null : new File(path), new RtpYamlMapping());
+    public YamlConfig(String path) {
+        this(path == null ? null : new File(path), new YamlMapping());
     }
 
     /**
@@ -51,40 +51,40 @@ public final class RtpYamlConfig extends RtpYamlSection {
      * The instance has no file binding until {@link #save(File)} is called
      * or {@link #setConfigurationFile(File)} is invoked.
      */
-    public RtpYamlConfig() {
-        this((File) null, new RtpYamlMapping());
+    public YamlConfig() {
+        this((File) null, new YamlMapping());
     }
 
     /** Load a YAML document from a file with comment preservation. */
-    public static RtpYamlConfig load(File file) throws IOException {
+    public static YamlConfig load(File file) throws IOException {
         if (file == null) throw new IllegalArgumentException("file must not be null");
         if (!file.exists() || file.length() == 0) {
-            return new RtpYamlConfig(file, new RtpYamlMapping());
+            return new YamlConfig(file, new YamlMapping());
         }
         String source = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-        RtpYamlMapping root = RtpYamlReader.parse(source);
-        return new RtpYamlConfig(file, root);
+        YamlMapping root = YamlReader.parse(source);
+        return new YamlConfig(file, root);
     }
 
     /** Parse a YAML document from a {@link Reader} (no file backing). */
-    public static RtpYamlConfig parse(Reader reader) throws IOException {
-        RtpYamlMapping root = RtpYamlReader.parse(reader);
-        return new RtpYamlConfig(null, root);
+    public static YamlConfig parse(Reader reader) throws IOException {
+        YamlMapping root = YamlReader.parse(reader);
+        return new YamlConfig(null, root);
     }
 
     /** Parse a YAML document from a string (no file backing). */
-    public static RtpYamlConfig parse(String source) {
-        return new RtpYamlConfig(null, RtpYamlReader.parse(source));
+    public static YamlConfig parse(String source) {
+        return new YamlConfig(null, YamlReader.parse(source));
     }
 
     /** Construct an empty document, optionally with a file binding. */
-    public static RtpYamlConfig empty(File file) {
-        return new RtpYamlConfig(file, new RtpYamlMapping());
+    public static YamlConfig empty(File file) {
+        return new YamlConfig(file, new YamlMapping());
     }
 
     /** Re-emit the document to a string using the writer. */
     public String saveToString() {
-        return RtpYamlWriter.emit(node);
+        return YamlWriter.emit(node);
     }
 
     /**
@@ -149,7 +149,7 @@ public final class RtpYamlConfig extends RtpYamlSection {
             return;
         }
         String source = new String(Files.readAllBytes(file.toPath()), StandardCharsets.UTF_8);
-        RtpYamlMapping fresh = RtpYamlReader.parse(source);
+        YamlMapping fresh = YamlReader.parse(source);
         node.entries().clear();
         node.entries().putAll(fresh.entries());
         node.setBlockComments(new java.util.ArrayList<>(fresh.blockComments()));
@@ -168,12 +168,12 @@ public final class RtpYamlConfig extends RtpYamlSection {
     public void saveWithComments() throws IOException { save(); }
 
     /** Mirrors {@code simpleyaml}'s {@code YamlFile.options()}. */
-    public RtpYamlOptions options() { return options; }
+    public YamlOptions options() { return options; }
 
     /**
      * Mirrors {@code simpleyaml}'s {@code addDefault(String, Object)}: set the
      * value only if the key is not already present. Implemented in terms of
-     * {@link RtpYamlSection#set(String, Object)} so the change is materialized
+     * {@link YamlSection#set(String, Object)} so the change is materialized
      * directly into the root mapping (no separate defaults overlay) — this
      * matches what call sites expect after a subsequent {@link #save()}.
      */
@@ -183,14 +183,14 @@ public final class RtpYamlConfig extends RtpYamlSection {
 
     /**
      * Mirrors top-level {@code isConfigurationSection(String)} on
-     * {@code YamlFile}. Inherited from {@link RtpYamlSection}.
+     * {@code YamlFile}. Inherited from {@link YamlSection}.
      */
 
     /* ---------- file-handle parity (Session 2 surface) ---------- */
 
     /** Path-and-file constructor mirroring {@code simpleyaml}'s {@code new YamlFile(File)}. */
-    public RtpYamlConfig(File file) {
-        this(file, new RtpYamlMapping());
+    public YamlConfig(File file) {
+        this(file, new YamlMapping());
     }
 
     /**
@@ -279,7 +279,7 @@ public final class RtpYamlConfig extends RtpYamlSection {
     public void loadConfiguration(InputStream in, boolean closeStream) throws IOException {
         if (in == null) throw new IllegalArgumentException("input must not be null");
         try (Reader reader = new InputStreamReader(in, StandardCharsets.UTF_8)) {
-            RtpYamlMapping fresh = RtpYamlReader.parse(reader);
+            YamlMapping fresh = YamlReader.parse(reader);
             node.entries().clear();
             node.entries().putAll(fresh.entries());
             node.setBlockComments(new java.util.ArrayList<>(fresh.blockComments()));
